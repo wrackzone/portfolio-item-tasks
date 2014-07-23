@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>portfolio-items-tasks</title>
+
+    <script type="text/javascript" src="https://rally1.rallydev.com/apps/2.0rc3/sdk.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/async/1.22/async.min.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                var app=null;Ext.define("CustomApp",{extend:"Rally.app.App",componentCls:"app",config:{defaultSettings:{portfolioItem:"G1076"}},getSettingsFields:function(){return[{name:"portfolioItem",xtype:"rallytextfield",label:"Portfolio Item ID eg. F1999"}]},launch:function(){app=this;var portfioItemID=app.getSetting("portfolioItem"),configs=[{model:"portfolioItem/Goal",fetch:["ObjectID"],filters:[{property:"FormattedID",operator:"=",value:portfioItemID}]}];async.map(configs,app.wsapiQuery,function(err,results){if(console.log("results",results[0][0]),1>results[0].length)Rally.ui.notify.Notifier.show({message:"ID "+portfioItemID+" not found!"});else{var piObjectID=results[0][0].get("ObjectID");console.log("ObjectID:",piObjectID),app.querySnapshots(piObjectID)}})},createWsapiFilter:function(ids){var filter=null;return _.each(ids,function(id,i){var f=Ext.create("Rally.data.wsapi.Filter",{property:"ObjectID",operator:"=",value:id});filter=0===i?f:filter.or(f)}),filter},readObjectsById:function(snapshots,fieldName,displayName,model){var ids=_.map(snapshots,function(s){return s.get(fieldName)});ids=_.uniq(_.compact(ids));var filter=app.createWsapiFilter(ids),config={model:model,fetch:[displayName],filters:[filter]};async.map([config],app.wsapiQuery,function(err,results){app[model]=results[0],console.log(model,app[model])})},querySnapshots:function(id){var storeConfig={filters:app.createSnapshotFilters(app.getContext(),id),fetch:["FormattedID","Name","Owner","Project","State","Estimate","WorkProduct","ToDo","_TypeHierarchy"],hydrate:["_TypeHierarchy"],autoLoad:!0,pageSize:1e4,limit:"Infinity",listeners:{scope:this,load:function(store,snapshots,success){console.log("Read snapshots:",snapshots.length),app.readObjectsById(snapshots,"Owner","UserName","User")}}},snapshotStore=Ext.create("Rally.data.lookback.SnapshotStore",storeConfig);app.grid=Ext.create("Rally.ui.grid.Grid",{columnCfgs:[{text:"ID",dataIndex:"FormattedID"},{text:"Name",dataIndex:"Name"},{text:"Owner",dataIndex:"Owner",renderer:app.renderWorkProduct1},{text:"Project",dataIndex:"Project"},{text:"WorkProduct",dataIndex:"WorkProduct",renderer:app.renderWorkProduct},{text:"State",dataIndex:"State"},{text:"Estimate",dataIndex:"Estimate"},{text:"ToDo",dataIndex:"ToDo"}],store:snapshotStore}),app.add(app.grid)},renderWorkProduct:function(v,m,r){return v},renderWorkProduct1:function(v,m,r){return console.log(v,m,r),v},createSnapshotFilters:function(ctx,id){return[{property:"__At",operator:"=",value:"current"},{property:"_ProjectHierarchy",operator:"in",value:[ctx.getProject().ObjectID]},{property:"_TypeHierarchy",operator:"in",value:["Task"]},{property:"_ItemHierarchy",operator:"in",value:[id]}]},wsapiQuery:function(config,callback){Ext.create("Rally.data.WsapiDataStore",{autoLoad:!0,limit:"Infinity",model:config.model,fetch:config.fetch,filters:config.filters,listeners:{scope:this,load:function(store,data){callback(null,data)}}})}});
+
+            Rally.launchApp('CustomApp', {
+                name:"portfolio-items-tasks",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        
+    </style>
+</head>
+<body>
+</body>
+</html>
