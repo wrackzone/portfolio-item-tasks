@@ -33,7 +33,7 @@ Ext.define('CustomApp', {
 
         var configs = [
             {   
-            	model : "portfolioItem/Goal",
+            	model : "portfolioItem",
                 fetch : ["ObjectID"],
                 filters : [ { property:"FormattedID", operator:"=", value: portfioItemID } ]
             }
